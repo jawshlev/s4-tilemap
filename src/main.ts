@@ -8,7 +8,6 @@ const gridCtx = gridCanvas.getContext("2d") as CanvasRenderingContext2D;
 const selectCanvas = document.getElementById("selectCanvas") as HTMLCanvasElement;
 const selectCtx = selectCanvas.getContext("2d") as CanvasRenderingContext2D;
 
-
 //defining the textures to use
 const imageUrls = [
     "/tile1.png",
@@ -21,6 +20,19 @@ const imageUrls = [
     "/tile8.png"
 ];
 
+class TextureManager {
+    private textureCache: { [key: string]: HTMLImageElement } = {};
+
+    getTexture(url: string): HTMLImageElement {
+        if (!this.textureCache[url]) {
+            this.textureCache[url] = new Image();
+            this.textureCache[url].src = url;
+        }
+        return this.textureCache[url];
+    }
+}
+
+const textureManager = new TextureManager();
 
 //defining the size of the main grid
 const numTiles = 32;
@@ -54,11 +66,12 @@ drawSelectCanvas();
 
 
 //Function that draws a texture to a specific canvas ctx
-function drawTexture(row: number, col: number, ctx: CanvasRenderingContext2D, image: HTMLImageElement, width: number, height: number, cellSize: number) {
-    image.onload = () => {
-        ctx.drawImage(image, row * cellSize, col * cellSize, width, height)
+function drawTexture(row: number, col: number, ctx: CanvasRenderingContext2D, textureUrl: string, width: number, height: number, cellSize: number) {
+    const texture = textureManager.getTexture(textureUrl);
+    texture.onload = () => {
+        ctx.drawImage(texture, row * cellSize, col * cellSize, width, height)
     };
-    ctx.drawImage(image, row * cellSize, col * cellSize, width, height)
+    ctx.drawImage(texture, row * cellSize, col * cellSize, width, height)
 }
 
 
@@ -69,7 +82,7 @@ function redrawTilemap()
   gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
     for (let i = 0; i < numTiles; i++) {
         for (let j = 0; j < numTiles; j++) {
-            drawTexture(i, j, gridCtx, tilemap[i][j], gridCanvas.width / numTiles, gridCanvas.height / numTiles, tileSize);
+            drawTexture(i, j, gridCtx, currentTile, gridCanvas.width / numTiles, gridCanvas.height / numTiles, tileSize);
         }
     }
 }
@@ -92,7 +105,7 @@ function drawSelectCanvas()
     for (let i = 0; i < numSelectables; i++) {
         const selectableImage = new Image();
         selectableImage.src = imageUrls[i];
-        drawTexture(0, i, selectCtx, selectableImage, selectCanvas.width, selectHeight, 64);
+        drawTexture(0, i, selectCtx, imageUrls[i], selectCanvas.width, selectHeight, 64);
     }
 }
 
